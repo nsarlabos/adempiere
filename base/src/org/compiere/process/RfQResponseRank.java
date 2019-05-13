@@ -180,6 +180,7 @@ public class RfQResponseRank extends SvrProcess
 						if (rank == 0)	//	Update RfQ
 						{
 							rfqQty.setBestResponseAmt(qty.getNetAmt());
+							rfqQty.setMargin((BigDecimal) qty.get_Value("Margin"));
 							rfqQty.saveEx();
 						}
 						rank++;
