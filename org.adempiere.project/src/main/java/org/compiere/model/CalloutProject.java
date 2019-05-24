@@ -425,36 +425,4 @@ public class CalloutProject extends CalloutEngine
 
 		return "";
 	}
-
-	public String setPriceListVersion (Properties ctx, int WindowNo, GridTab mTab, GridField mField, Object value){
-
-		if (value == null){
-			mTab.setValue("M_PriceList_Version_ID", null);
-			mTab.setValue("C_Currency_ID", null);
-			return "";
-		}
-
-		//	No Callout Active to fire dependent values
-		if (isCalloutActive())    //	prevent recursive
-			return "";
-
-		int priceListID = ((Integer) value).intValue();
-		MPriceList list = new MPriceList(ctx, priceListID, null);
-
-		if (list != null && list.get_ID() > 0) {
-
-			mTab.setValue("C_Currency_ID", list.getC_Currency_ID());
-
-			Timestamp today = TimeUtil.trunc(new Timestamp(System.currentTimeMillis()), TimeUtil.TRUNC_DAY);
-
-			MPriceListVersion version = list.getPriceListVersion(today);
-
-			if (version != null && version.get_ID() > 0){
-				mTab.setValue("M_PriceList_Version_ID", version.get_ID());
-			} else mTab.setValue("M_PriceList_Version_ID", null);
-
-		}
-
-		return "";
-	}
 }	//	CalloutProject
