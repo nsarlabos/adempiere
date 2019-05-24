@@ -17,6 +17,7 @@ package org.spin.model;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -24,65 +25,10 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.I_AD_Image;
-import org.compiere.model.I_C_BPartner;
-import org.compiere.model.I_C_Commission;
-import org.compiere.model.I_C_CommissionRun;
-import org.compiere.model.I_C_CommissionSalesRep;
-import org.compiere.model.I_C_CommissionType;
-import org.compiere.model.I_C_Invoice;
-import org.compiere.model.I_C_Order;
-import org.compiere.model.I_C_OrderLine;
-import org.compiere.model.I_C_Project;
-import org.compiere.model.I_C_ProjectPhase;
-import org.compiere.model.I_C_ProjectTask;
-import org.compiere.model.I_R_Request;
-import org.compiere.model.I_S_TimeExpense;
-import org.compiere.model.MAttachment;
-import org.compiere.model.MAttachmentEntry;
-import org.compiere.model.MBPartner;
-import org.compiere.model.MClient;
-import org.compiere.model.MCommission;
-import org.compiere.model.MCommissionLine;
-import org.compiere.model.MCommissionRun;
-import org.compiere.model.MDocType;
-import org.compiere.model.MImage;
-import org.compiere.model.MInOut;
-import org.compiere.model.MInOutLine;
-import org.compiere.model.MInvoice;
-import org.compiere.model.MInvoiceLine;
-import org.compiere.model.MMailText;
-import org.compiere.model.MOrder;
-import org.compiere.model.MOrderLine;
-import org.compiere.model.MPriceList;
-import org.compiere.model.MPriceListVersion;
-import org.compiere.model.MProduct;
-import org.compiere.model.MProductPrice;
-import org.compiere.model.MProject;
-import org.compiere.model.MProjectPhase;
-import org.compiere.model.MProjectTask;
-import org.compiere.model.MRequest;
-import org.compiere.model.MRequestType;
-import org.compiere.model.MRequestUpdate;
-import org.compiere.model.MRfQLine;
-import org.compiere.model.MRfQLineQty;
-import org.compiere.model.MStatus;
-import org.compiere.model.MTimeExpense;
-import org.compiere.model.MTimeExpenseLine;
-import org.compiere.model.MTree;
-import org.compiere.model.MTree_NodeBP;
-import org.compiere.model.ModelValidationEngine;
-import org.compiere.model.ModelValidator;
-import org.compiere.model.PO;
-import org.compiere.model.Query;
-import org.compiere.model.X_C_CommissionSalesRep;
+import org.compiere.model.*;
 import org.compiere.process.DocAction;
 import org.compiere.process.OrderPOCreateAbstract;
-import org.compiere.util.CLogger;
-import org.compiere.util.DB;
-import org.compiere.util.DisplayType;
-import org.compiere.util.Env;
-import org.compiere.util.Msg;
+import org.compiere.util.*;
 import org.eevolution.service.dsl.ProcessBuilder;
 import org.spin.process.CommissionOrderCreateAbstract;
 
@@ -241,6 +187,21 @@ public class AgencyValidator implements ModelValidator
 						}
 					}
 				}
+			} else if(po instanceof MProject) {
+				MProject project = (MProject) po;
+				if(project.is_ValueChanged("M_PriceList_ID")){
+					if(project.getM_PriceList_ID() > 0){
+						MPriceList list = new MPriceList(project.getCtx(), project.getM_PriceList_ID(), project.get_TrxName());
+						project.setC_Currency_ID(list.getC_Currency_ID());
+
+						Timestamp today = TimeUtil.trunc(new Timestamp(System.currentTimeMillis()), TimeUtil.TRUNC_DAY);
+						MPriceListVersion version = list.getPriceListVersion(today);
+
+						if (version != null && version.get_ID() > 0){
+							project.setM_PriceList_Version_ID(version.get_ID());
+						} else project.setM_PriceList_Version_ID(0);
+					}
+				}
 			}
 		}
 		if (type == TYPE_BEFORE_CHANGE) {
@@ -365,7 +326,8 @@ public class AgencyValidator implements ModelValidator
 			} else if(po instanceof MOrder) {
 				MOrder order = (MOrder) po;
 				int orderprojectId = order.getC_Project_ID();
-				if(orderprojectId > 0) {					
+				if(orderprojectId > 0) {
+					if(order.getC_ConversionType_ID() <= 0) order.setC_ConversionType_ID(MConversionType.TYPE_SPOT);
 					MProject project = new MProject(order.getCtx(), orderprojectId,order.get_TrxName());
 					// Validates Customer Approved
 					if(!project.get_ValueAsBoolean("IsCustomerApproved")) {

@@ -156,7 +156,6 @@ public class ProjectPhaseGenOrder  extends ProjectPhaseGenOrderAbstract
 			order.setDateOrdered(dateOrdered);
 		}
 		order.setDescription(order.getDescription() + " - " + name);
-		order.setC_ConversionType_ID(MConversionType.TYPE_SPOT);
 		order.saveEx();
 		
 		//	Create an order on Phase Level
