@@ -25,15 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.I_C_Order;
-import org.compiere.model.MOrder;
-import org.compiere.model.MOrderLine;
-import org.compiere.model.MProduct;
-import org.compiere.model.MProject;
-import org.compiere.model.MProjectLine;
-import org.compiere.model.MProjectPhase;
-import org.compiere.model.MProjectTask;
-import org.compiere.model.MUOMConversion;
+import org.compiere.model.*;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 
@@ -164,6 +156,7 @@ public class ProjectPhaseGenOrder  extends ProjectPhaseGenOrderAbstract
 			order.setDateOrdered(dateOrdered);
 		}
 		order.setDescription(order.getDescription() + " - " + name);
+		order.setC_ConversionType_ID(MConversionType.TYPE_SPOT);
 		order.saveEx();
 		
 		//	Create an order on Phase Level
